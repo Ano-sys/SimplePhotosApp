@@ -26,7 +26,11 @@ public partial class MainWindowViewModel : ViewModelBase
     [ObservableProperty] private bool _photosLoaded = false;
 
     [ObservableProperty] private string _libraryPath = string.Empty;
-    
+
+    public string HelpDisclaimer { get; } =
+        "Help\n\nPhotos lets you browse image folders, open pictures in a larger view, and move through your library quickly with either the mouse or the keyboard.\n\nGetting started\nChoose Open Library to select a folder, or drag an image file into the window to open its containing folder. Subfolders appear as cards at the top of the gallery. Click a folder card to enter it.\n\nBrowsing photos\nClick any thumbnail to open it in a larger view. Click the image again, click outside it, or press Escape to close it.\n\nKeyboard shortcuts\nUse the arrow keys to move through the photo grid.\nLeft and Right move one item at a time.\nUp and Down move one row at a time.\nPress Enter or Space to open the currently selected photo.\nPress Enter again or Escape to close the focused photo.\nPress Backspace to go to the parent folder.\n\nExtra notes\nClick the current path in the title bar to go up one level.\nSupported image formats: PNG, JPG, and JPEG.\n";
+    [ObservableProperty] private bool _isHelpDisclaimerVisible = false;
+
     public MainWindowViewModel(IFolderPickerService folderPickerService)
     {
         _folderPickerService = folderPickerService;
@@ -145,4 +149,6 @@ public partial class MainWindowViewModel : ViewModelBase
         var newPath = !folder.StartsWith(LibraryPath) ? Path.Combine(LibraryPath, folder) : folder;
         return Directory.Exists(newPath) ? newPath : null;
     }
+
+    public void FlipHelpDisclaimerVisibility() => IsHelpDisclaimerVisible = !IsHelpDisclaimerVisible;
 }
