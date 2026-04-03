@@ -1,0 +1,238 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:Photos.ViewModels"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:i="using:Avalonia.Xaml.Interactivity"
+        xmlns:ic="using:Avalonia.Xaml.Interactions.Core"
+        xmlns:models="using:Photos.Models"
+        xmlns:anim="using:Photos.Animations"
+        mc:Ignorable="d"
+        d:DesignWidth="1200"
+        d:DesignHeight="800"
+        x:Class="Photos.Views.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
+        x:Name="Root"
+        Icon="/Assets/SimplePhotos.ico"
+        Title="Photos"
+        DragDrop.AllowDrop="True"
+        DragDrop.Drop="DropHandler"
+        ExtendClientAreaChromeHints="NoChrome"
+        TransparencyLevelHint="AcrylicBlur"
+        Background="Transparent"
+        ExtendClientAreaToDecorationsHint="True"
+        Focusable="True"
+        KeyDown="OnKeyDownHandler">
+
+    <Design.DataContext>
+        <vm:MainWindowViewModel/>
+    </Design.DataContext>
+
+    <Grid Background="#0F0F10">
+        <Rectangle Fill="#CC0B0B0C"/>
+
+        <Grid RowDefinitions="Auto,*">
+
+            <!-- Top Bar -->
+            <Border Grid.Row="0"
+                    Margin="18,18,18,0"
+                    Padding="14,10"
+                    Background="#CC161618"
+                    BorderBrush="#22FFFFFF"
+                    BorderThickness="1"
+                    CornerRadius="14"
+                    BoxShadow="0 10 30 0 #50000000"
+                    ZIndex="20">
+                <DockPanel LastChildFill="True">
+                    <StackPanel Orientation="Horizontal"
+                                DockPanel.Dock="Left"
+                                Spacing="10"
+                                VerticalAlignment="Center">
+                        <Border Width="10"
+                                Height="10"
+                                CornerRadius="999"
+                                Background="#E6FFFFFF"
+                                Opacity="0.9"/>
+                        <TextBlock Text="Photos"
+                                   VerticalAlignment="Center"
+                                   FontSize="16"
+                                   FontWeight="SemiBold"
+                                   Foreground="#F2FFFFFF"/>
+                    </StackPanel>
+
+                    <Menu DockPanel.Dock="Right"
+                          Background="Transparent"
+                          Foreground="#EDEDED"
+                          Margin="5,0,0,0"
+                          IsTabStop="False"
+                          Focusable="False"
+                          >
+                        <!--
+                        <MenuItem Header="_File">
+                            <MenuItem Header="_Open" Command="{Binding OpenDirectory}"/>
+                            <MenuItem Header="_Close" Command="{Binding CloseDirectory}"/>
+                        </MenuItem>
+                        -->
+                        <MenuItem Header="_Open Library" Focusable="False" IsVisible="{Binding !PhotosLoaded}" Command="{Binding OpenDirectory}"/>
+                        <MenuItem Header="_Close Library" Focusable="False" IsVisible="{Binding PhotosLoaded}" Command="{Binding CloseDirectory}"/>
+                    </Menu>
+                </DockPanel>
+            </Border>
+
+            <!-- Empty state -->
+            <Grid Grid.Row="1"
+                  IsVisible="{Binding !PhotosLoaded}"
+                  HorizontalAlignment="Stretch"
+                  VerticalAlignment="Stretch">
+                <Border HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Padding="28"
+                        Background="#B3141416"
+                        BorderBrush="#22FFFFFF"
+                        BorderThickness="1"
+                        CornerRadius="18"
+                        BoxShadow="0 16 40 0 #40000000">
+                    <StackPanel Spacing="14"
+                                HorizontalAlignment="Center">
+                        <TextBlock Text="No directory opened"
+                                   HorizontalAlignment="Center"
+                                   FontSize="22"
+                                   FontWeight="SemiBold"
+                                   Foreground="#F4FFFFFF"/>
+                        <TextBlock Text="Choose a folder to display your images."
+                                   HorizontalAlignment="Center"
+                                   Foreground="#B8FFFFFF"/>
+                        <Button Content="Open Directory"
+                                Command="{Binding OpenDirectory}"
+                                HorizontalAlignment="Center"
+                                Padding="20,10"
+                                CornerRadius="10"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <!-- Galerie -->
+            <ScrollViewer Grid.Row="0"
+                          Grid.RowSpan="2"
+                          IsVisible="{Binding PhotosLoaded}">
+                <Border Padding="72,88,72,48">
+                    <ItemsRepeater x:Name="Repeater"
+                                   ItemsSource="{Binding Photos}"
+                                   HorizontalAlignment="Stretch"
+                                   VerticalAlignment="Stretch"
+                                   ClipToBounds="False"
+                                   IsTabStop="True"
+                                   >
+                        <ItemsRepeater.Layout>
+                            <UniformGridLayout MinItemWidth="220"
+                                               MinItemHeight="290"
+                                               MinRowSpacing="18"
+                                               MinColumnSpacing="18"/>
+                        </ItemsRepeater.Layout>
+
+                        <ItemsRepeater.ItemTemplate>
+                            <DataTemplate DataType="models:Photo">
+                                <Border Background="#B8141416"
+                                        BorderBrush="#22FFFFFF"
+                                        BorderThickness="1"
+                                        CornerRadius="18"
+                                        Padding="14"
+                                        BoxShadow="0 10 24 0 #30000000"
+                                        anim:CardHoverEffectBehavior.IsEnabled="True"
+                                        anim:CardHoverEffectBehavior.MaxRotationAngle="2.5"
+                                        anim:CardHoverEffectBehavior.ScaleFactor="1.08"
+                                        >
+                                    <StackPanel Orientation="Vertical"
+                                                Spacing="10">
+                                        <i:Interaction.Behaviors>
+                                            <ic:EventTriggerBehavior EventName="PointerReleased">
+                                                <ic:InvokeCommandAction Command="{Binding DataContext.PhotoClicked, ElementName=Root}"
+                                                                        PassEventArgsToCommand="True"/>
+                                            </ic:EventTriggerBehavior>
+                                        </i:Interaction.Behaviors>
+
+                                        <Border Width="180"
+                                                Height="180"
+                                                HorizontalAlignment="Center"
+                                                CornerRadius="12"
+                                                ClipToBounds="True"
+                                                Background="#14000000">
+                                            <Image Source="{Binding PreviewImage}"
+                                                   Stretch="UniformToFill"
+                                                   PointerEntered="PointerEnteredPhotoHandler"
+                                                   />
+                                        </Border>
+
+                                        <TextBlock Text="{Binding DisplayName}"
+                                                   ToolTip.Tip="{Binding DisplayName}"
+                                                   HorizontalAlignment="Center"
+                                                   Width="180"
+                                                   TextAlignment="Center"
+                                                   TextTrimming="CharacterEllipsis"
+                                                   FontSize="14"
+                                                   FontWeight="SemiBold"
+                                                   Foreground="#F1FFFFFF"/>
+
+                                        <TextBlock Text="{Binding DisplayPath}"
+                                                   ToolTip.Tip="{Binding DisplayPath}"
+                                                   HorizontalAlignment="Center"
+                                                   Width="180"
+                                                   TextAlignment="Center"
+                                                   TextTrimming="CharacterEllipsis"
+                                                   MaxLines="2"
+                                                   FontSize="11"
+                                                   Foreground="#99FFFFFF"/>
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsRepeater.ItemTemplate>
+                    </ItemsRepeater>
+                </Border>
+            </ScrollViewer>
+
+            <!-- Photo-Overlay -->
+            <TransitioningContentControl Grid.Row="0"
+                                         Grid.RowSpan="2"
+                                         Content="{Binding SelectedPhoto}"
+                                         ZIndex="50"
+                                         >
+                <TransitioningContentControl.PageTransition>
+                    <CrossFade Duration="0:0:0.18"/>
+                </TransitioningContentControl.PageTransition>
+
+                <i:Interaction.Behaviors>
+                    <ic:EventTriggerBehavior EventName="PointerReleased">
+                        <ic:InvokeCommandAction Command="{Binding Path=DataContext.ResetSelectedPhoto, ElementName=Root}"/>
+                    </ic:EventTriggerBehavior>
+                </i:Interaction.Behaviors>
+
+                <TransitioningContentControl.ContentTemplate>
+                    <DataTemplate DataType="models:Photo">
+                        <Grid>
+                            <Rectangle Fill="#E6101011"/>
+
+                            <Border Margin="36"
+                                    Padding="18"
+                                    Background="#12000000"
+                                    BorderBrush="#18FFFFFF"
+                                    BorderThickness="1"
+                                    CornerRadius="24">
+                                <Grid RowDefinitions="*, auto">
+                                    <Image Source="{Binding FullImage}"
+                                           Stretch="Uniform">
+                                        <i:Interaction.Behaviors>
+                                            <ic:EventTriggerBehavior EventName="PointerReleased">
+                                                <ic:InvokeCommandAction Command="{Binding Path=DataContext.ResetSelectedPhoto, ElementName=Root}"/>
+                                            </ic:EventTriggerBehavior>
+                                        </i:Interaction.Behaviors>
+                                    </Image>
+                                    <TextBlock Grid.Row="1" Text="{Binding DisplayName}" HorizontalAlignment="Center" VerticalAlignment="Bottom"/>
+                                </Grid>
+                            </Border>
+                        </Grid>
+                    </DataTemplate>
+                </TransitioningContentControl.ContentTemplate>
+            </TransitioningContentControl>
+        </Grid>
+    </Grid>
+</Window>
