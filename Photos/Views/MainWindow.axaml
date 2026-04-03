@@ -58,21 +58,23 @@
                                    FontSize="16"
                                    FontWeight="SemiBold"
                                    Foreground="#F2FFFFFF"/>
+                        <TextBlock Text="{Binding LibraryPath}"
+                                   IsVisible="{Binding LibraryPath.Length}"
+                                   VerticalAlignment="Center"
+                                   FontSize="16"
+                                   FontWeight="SemiBold"
+                                   Foreground="#F2FFFFFF"
+                                   PointerReleased="LibraryPathViewerClicked"
+                                   />
                     </StackPanel>
 
-                    <Menu DockPanel.Dock="Right"
+                    <Menu DockPanel.Dock="Left"
                           Background="Transparent"
                           Foreground="#EDEDED"
-                          Margin="5,0,0,0"
+                          Margin="5,0,5,0"
                           IsTabStop="False"
                           Focusable="False"
                           >
-                        <!--
-                        <MenuItem Header="_File">
-                            <MenuItem Header="_Open" Command="{Binding OpenDirectory}"/>
-                            <MenuItem Header="_Close" Command="{Binding CloseDirectory}"/>
-                        </MenuItem>
-                        -->
                         <MenuItem Header="_Open Library" Focusable="False" IsVisible="{Binding !PhotosLoaded}" Command="{Binding OpenDirectory}"/>
                         <MenuItem Header="_Close Library" Focusable="False" IsVisible="{Binding PhotosLoaded}" Command="{Binding CloseDirectory}"/>
                     </Menu>
@@ -116,77 +118,130 @@
                           Grid.RowSpan="2"
                           IsVisible="{Binding PhotosLoaded}">
                 <Border Padding="72,88,72,48">
-                    <ItemsRepeater x:Name="Repeater"
-                                   ItemsSource="{Binding Photos}"
-                                   HorizontalAlignment="Stretch"
-                                   VerticalAlignment="Stretch"
-                                   ClipToBounds="False"
-                                   IsTabStop="True"
-                                   >
-                        <ItemsRepeater.Layout>
-                            <UniformGridLayout MinItemWidth="220"
-                                               MinItemHeight="290"
-                                               MinRowSpacing="18"
-                                               MinColumnSpacing="18"/>
-                        </ItemsRepeater.Layout>
-
-                        <ItemsRepeater.ItemTemplate>
-                            <DataTemplate DataType="models:Photo">
-                                <Border Background="#B8141416"
-                                        BorderBrush="#22FFFFFF"
-                                        BorderThickness="1"
-                                        CornerRadius="18"
-                                        Padding="14"
-                                        BoxShadow="0 10 24 0 #30000000"
-                                        anim:CardHoverEffectBehavior.IsEnabled="True"
-                                        anim:CardHoverEffectBehavior.MaxRotationAngle="2.5"
-                                        anim:CardHoverEffectBehavior.ScaleFactor="1.08"
+                    <Grid RowDefinitions="Auto, *">
+                        <ItemsRepeater Grid.Row="0" x:Name="DirRepeater"
+                                       ItemsSource="{Binding Directories}"
+                                       HorizontalAlignment="Stretch"
+                                       VerticalAlignment="Stretch"
+                                       ClipToBounds="False"
+                                       IsTabStop="True"
                                         >
-                                    <StackPanel Orientation="Vertical"
-                                                Spacing="10">
-                                        <i:Interaction.Behaviors>
-                                            <ic:EventTriggerBehavior EventName="PointerReleased">
-                                                <ic:InvokeCommandAction Command="{Binding DataContext.PhotoClicked, ElementName=Root}"
-                                                                        PassEventArgsToCommand="True"/>
-                                            </ic:EventTriggerBehavior>
-                                        </i:Interaction.Behaviors>
+                            <ItemsRepeater.Layout>
+                                <UniformGridLayout MinItemWidth="220"
+                                                   MinItemHeight="290"
+                                                   MinRowSpacing="18"
+                                                   MinColumnSpacing="18"/>
+                            </ItemsRepeater.Layout>
 
-                                        <Border Width="180"
-                                                Height="180"
-                                                HorizontalAlignment="Center"
-                                                CornerRadius="12"
-                                                ClipToBounds="True"
-                                                Background="#14000000">
-                                            <Image Source="{Binding PreviewImage}"
-                                                   Stretch="UniformToFill"
-                                                   PointerEntered="PointerEnteredPhotoHandler"
-                                                   />
-                                        </Border>
+                            <ItemsRepeater.ItemTemplate>
+                                <DataTemplate DataType="x:String">
+                                    <Border Background="#B8141416"
+                                            BorderBrush="#22FFFFFF"
+                                            BorderThickness="1"
+                                            CornerRadius="18"
+                                            Padding="14"
+                                            BoxShadow="0 10 24 0 #30000000"
+                                            anim:CardHoverEffectBehavior.IsEnabled="True"
+                                            anim:CardHoverEffectBehavior.MaxRotationAngle="2.5"
+                                            anim:CardHoverEffectBehavior.ScaleFactor="1.08"
+                                            >
+                                        <StackPanel Orientation="Vertical"
+                                                    Spacing="10"
+                                                    PointerReleased="DirectoryClickedHandler">
+                                            <Border Width="180"
+                                                    Height="180"
+                                                    HorizontalAlignment="Center"
+                                                    CornerRadius="12"
+                                                    ClipToBounds="True"
+                                                    Background="#14000000">
+                                                <!-- Leave in this order, MainWindow uses Image.Parent.Parent -->
+                                                <Image Source="/Assets/SimplePhotos.ico"
+                                                       Stretch="UniformToFill"
+                                                       PointerEntered="PointerEnteredPhotoHandler"
+                                                />
+                                            </Border>
 
-                                        <TextBlock Text="{Binding DisplayName}"
-                                                   ToolTip.Tip="{Binding DisplayName}"
-                                                   HorizontalAlignment="Center"
-                                                   Width="180"
-                                                   TextAlignment="Center"
-                                                   TextTrimming="CharacterEllipsis"
-                                                   FontSize="14"
-                                                   FontWeight="SemiBold"
-                                                   Foreground="#F1FFFFFF"/>
+                                            <TextBlock Text="{Binding}"
+                                                       ToolTip.Tip="{Binding}"
+                                                       HorizontalAlignment="Center"
+                                                       Width="180"
+                                                       TextAlignment="Center"
+                                                       TextTrimming="CharacterEllipsis"
+                                                       FontSize="14"
+                                                       FontWeight="SemiBold"
+                                                       Foreground="#F1FFFFFF"/>
+                                        </StackPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsRepeater.ItemTemplate>
+                        </ItemsRepeater>
+                        <ItemsRepeater Grid.Row="1" x:Name="Repeater"
+                                       ItemsSource="{Binding Photos}"
+                                       HorizontalAlignment="Stretch"
+                                       VerticalAlignment="Stretch"
+                                       ClipToBounds="False"
+                                       IsTabStop="True"
+                                       Margin="0,18,0,0"
+                                        >
+                            <ItemsRepeater.Layout>
+                                <UniformGridLayout MinItemWidth="220"
+                                                   MinItemHeight="290"
+                                                   MinRowSpacing="18"
+                                                   MinColumnSpacing="18"/>
+                            </ItemsRepeater.Layout>
 
-                                        <TextBlock Text="{Binding DisplayPath}"
-                                                   ToolTip.Tip="{Binding DisplayPath}"
-                                                   HorizontalAlignment="Center"
-                                                   Width="180"
-                                                   TextAlignment="Center"
-                                                   TextTrimming="CharacterEllipsis"
-                                                   MaxLines="2"
-                                                   FontSize="11"
-                                                   Foreground="#99FFFFFF"/>
-                                    </StackPanel>
-                                </Border>
-                            </DataTemplate>
-                        </ItemsRepeater.ItemTemplate>
-                    </ItemsRepeater>
+                            <ItemsRepeater.ItemTemplate>
+                                <DataTemplate DataType="models:Photo">
+                                    <Border Background="#B8141416"
+                                            BorderBrush="#22FFFFFF"
+                                            BorderThickness="1"
+                                            CornerRadius="18"
+                                            Padding="14"
+                                            BoxShadow="0 10 24 0 #30000000"
+                                            anim:CardHoverEffectBehavior.IsEnabled="True"
+                                            anim:CardHoverEffectBehavior.MaxRotationAngle="2.5"
+                                            anim:CardHoverEffectBehavior.ScaleFactor="1.08"
+                                            >
+                                        <StackPanel Orientation="Vertical"
+                                                    Spacing="10"
+                                                    PointerReleased="PhotoClickedHandler">
+                                            <Border Width="180"
+                                                    Height="180"
+                                                    HorizontalAlignment="Center"
+                                                    CornerRadius="12"
+                                                    ClipToBounds="True"
+                                                    Background="#14000000">
+                                                <Image Source="{Binding PreviewImage}"
+                                                       Stretch="UniformToFill"
+                                                       PointerEntered="PointerEnteredPhotoHandler"
+                                                       />
+                                            </Border>
+
+                                            <TextBlock Text="{Binding DisplayName}"
+                                                       ToolTip.Tip="{Binding DisplayName}"
+                                                       HorizontalAlignment="Center"
+                                                       Width="180"
+                                                       TextAlignment="Center"
+                                                       TextTrimming="CharacterEllipsis"
+                                                       FontSize="14"
+                                                       FontWeight="SemiBold"
+                                                       Foreground="#F1FFFFFF"/>
+
+                                            <TextBlock Text="{Binding DisplayPath}"
+                                                       ToolTip.Tip="{Binding DisplayPath}"
+                                                       HorizontalAlignment="Center"
+                                                       Width="180"
+                                                       TextAlignment="Center"
+                                                       TextTrimming="CharacterEllipsis"
+                                                       MaxLines="2"
+                                                       FontSize="11"
+                                                       Foreground="#99FFFFFF"/>
+                                        </StackPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsRepeater.ItemTemplate>
+                        </ItemsRepeater>
+                    </Grid>
                 </Border>
             </ScrollViewer>
 

@@ -167,6 +167,9 @@ public partial class MainWindow : Window
                     await HandleArrowKey();
                 }
                 break;
+            case Key.Back:
+                await vm.OpenAboveDirectory();
+                break;
         }
     }
 
@@ -201,5 +204,35 @@ public partial class MainWindow : Window
                     _navigationInputMode == NavigationInputMode.Keyboard);
             }
         }
+    }
+
+    private async void PhotoClickedHandler(object? sender, PointerReleasedEventArgs e)
+    {
+        if (DataContext is not MainWindowViewModel vm) return;
+        if (e.Source is not Image i) return;
+
+        await vm.PhotoClicked(i);
+    }
+
+    private async void DirectoryClickedHandler(object? sender, PointerReleasedEventArgs e)
+    {
+        if (DataContext is not MainWindowViewModel vm) return;
+
+        var folder = e.Source switch
+        {
+            TextBlock t => vm.EvaluateFolderPath(t.Text) ?? string.Empty,
+            Image i => vm.EvaluateFolderPath(i.GetVisualParent()?.GetVisualParent()?.GetVisualChildren().OfType<TextBlock>().FirstOrDefault()?.Text) ?? string.Empty,
+            _ => string.Empty,
+        };
+
+        if (folder == string.Empty) return;
+
+        await vm.DirectoryClicked(folder);
+    }
+
+    private async void LibraryPathViewerClicked(object? _, PointerReleasedEventArgs __)
+    {
+        if (DataContext is not MainWindowViewModel vm) return;
+        await vm.OpenAboveDirectory();
     }
 }

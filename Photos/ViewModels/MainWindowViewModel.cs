@@ -19,16 +19,38 @@ public partial class MainWindowViewModel : ViewModelBase
 {
     private IFolderPickerService _folderPickerService;
 
+    [ObservableProperty] private ObservableCollection<string> _directories = [];
     [ObservableProperty] private ObservableCollection<Photo> _photos = [];
 
     [ObservableProperty] private Photo? _selectedPhoto;
     [ObservableProperty] private bool _photosLoaded = false;
 
-    public string LibraryPath { get; private set; } = string.Empty;
+    [ObservableProperty] private string _libraryPath = string.Empty;
     
     public MainWindowViewModel(IFolderPickerService folderPickerService)
     {
         _folderPickerService = folderPickerService;
+    }
+
+    private bool HasAccessRights(string folder)
+    {
+        try { Directory.GetFiles(folder); }
+        catch { return false; }
+        return true;
+    }
+
+    private async Task LoadDirectory(string? folder)
+    {
+        if (folder is null) return;
+        if (!HasAccessRights(folder)) return;
+
+        Photos.Clear();
+
+        LibraryPath = folder != "/" ? folder.TrimEnd('/') : folder;
+        Directories = new (Directory.EnumerateDirectories(folder).Select(x => x[LibraryPath.Length..].Trim('/')));
+
+        await AddPhotosAsync(folder);
+        PhotosLoaded = true;
     }
 
     public async Task OpenDirectory()
@@ -36,16 +58,16 @@ public partial class MainWindowViewModel : ViewModelBase
         var folder = await _folderPickerService.PickFolderAsync();
         if (folder is null) return;
 
-        // foreach(var p in Photos) p.Dispose();
-        Photos.Clear();
-
-        LibraryPath = folder;
-        await AddPhotosAsync(folder);
-        PhotosLoaded = true;
+        await LoadDirectory(folder);
     }
+
+    public async Task OpenDirectory(string folder) => await LoadDirectory(folder);
+
+    public async Task OpenAboveDirectory() => await LoadDirectory(Path.GetDirectoryName(LibraryPath));
 
     public void CloseDirectory()
     {
+        LibraryPath = string.Empty;
         Photos.Clear();
         PhotosLoaded = false;
     }
@@ -83,13 +105,14 @@ public partial class MainWindowViewModel : ViewModelBase
         await AddPhotosAsync(localPath);
     }
 
-    public async Task PhotoClicked(PointerReleasedEventArgs e)
+    public async Task PhotoClicked(Image img)
     {
-        if(e.Source is not Image img) return;
         SelectedPhoto = Photos.FirstOrDefault(x => x.PreviewImage == img.Source);
         if (SelectedPhoto is null) return;
         await SelectedPhoto.LoadFullImage();
     }
+
+    public async Task DirectoryClicked(string folder) => await OpenDirectory(folder);
 
     public void ResetSelectedPhoto()
     {
@@ -114,5 +137,12 @@ public partial class MainWindowViewModel : ViewModelBase
         var p = Photos.FirstOrDefault(x => x.PreviewImage == i.Source);
         if (p is null) return -1;
         return Photos.IndexOf(p);
+    }
+
+    public string? EvaluateFolderPath(string? folder)
+    {
+        if (folder is null) return null;
+        var newPath = !folder.StartsWith(LibraryPath) ? Path.Combine(LibraryPath, folder) : folder;
+        return Directory.Exists(newPath) ? newPath : null;
     }
 }
